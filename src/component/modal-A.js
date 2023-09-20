@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import Modal from 'react-bootstrap/Modal';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Form from 'react-bootstrap/Form';
 import FormCheck from 'react-bootstrap/FormCheck';
 import Table from 'react-bootstrap/Table';
 import RSC from "react-scrollbars-custom";
 import BaseService from '../services/base-service';
+import CommonFilter from './common-filter';
+import ContactDetailsPopup from './contact-details-popup';
+import ContactDataTable from './contact-data-table';
 
 //const pageSize = 20;
 
@@ -20,122 +22,99 @@ function ModalA() {
     const [onlyEven, setOnlyEven] = useState(false);
     const [contacts, setContacts] = useState([]);
     const [callShouldHappenOnScroll, setCallShouldHappenOnScroll] = useState(false);
+    const [isContactDetailsPopup, setIsContactDetailsPopup] = useState(false);
+    const [selectedContact, setSelectedContact] = useState({});
 
-    const getContactsData = (params) => {
-        //const { isConcatData } = params;
-        let URL = `contacts.json?companyId=171&countryId=226&page=${page}`;
+    const getContactsData = async (params) => {
+        let { isConcatData, pageNumber } = params;
+        if (!pageNumber) pageNumber = page;
+        let URL = `contacts.json?companyId=171&countryId=226&page=${pageNumber}`;
         if (value && value.trim()) {
             URL = `${URL}&query=${value}`;
         }
-        BaseService.get(URL)
+        await BaseService.get(URL)
             .then((response) => {
                 const contactsData = [];
-                const { total, contacts } = response.data;
+                const { total, contacts: responseData } = response.data;
                 setTotalRecord(total);
-                const contactKeys = Object.keys(contacts);
+                const contactKeys = Object.keys(responseData);
                 if (contactKeys && contactKeys.length) {
                     contactKeys.forEach(contactId => {
                         if (onlyEven) {
                             if (!(Number(contactId) % 2)) {
-                                const contact = contacts[contactId];
+                                const contact = responseData[contactId];
                                 contactsData.push(contact);
                             }
                         } else {
-                            const contact = contacts[contactId];
+                            const contact = responseData[contactId];
                             contactsData.push(contact);
                         }
                     });
 
-                    setContacts(contactsData);
+                    if (isConcatData) {
+                        const updatedData = contacts.concat(contactsData);
+                        setContacts(updatedData);
+                    } else {
+                        setContacts(contactsData);
+                    }
+                } else {
+                    if (page === 1) {
+                        setContacts([]);
+                    }
                 }
                 setCallShouldHappenOnScroll(false);
             });
     }
 
     useEffect(() => {
+        setPage(1);
         const getData = setTimeout(() => {
-            getContactsData({});
+            getContactsData({ pageNumber: 1 });
         }, 1000)
 
         return () => clearTimeout(getData);
     }, [value])
 
-    useEffect(() => {
-        if (onlyEven) {
-            getContactsData({});
-        }
-    }, [onlyEven]);
+    // useEffect(() => {
+    //     setPage(1);
+    //     getContactsData({ pageNumber: 1 });
+    // }, [onlyEven]);
 
     const onScrollStop = (scrollValues) => {
-        const { clientHeight, scrollHeight, scrollYPossible, scrollTop } = scrollValues;
-        if (scrollYPossible && !callShouldHappenOnScroll) {
-            const difference = scrollHeight - scrollTop - clientHeight;
-            if (difference < 10) {
-                setCallShouldHappenOnScroll(true);
-                console.log(scrollValues);
-            }
-        }
+        // const { clientHeight, scrollHeight, scrollYPossible, scrollTop } = scrollValues;
+        // if (scrollYPossible && !callShouldHappenOnScroll) {
+        //     const difference = scrollHeight - scrollTop - clientHeight;
+        //     if (difference < 10 && (page * 20) < totalRecord) {
+        //         setCallShouldHappenOnScroll(true);
+        //         const updatedPage = page + 1;
+        //         setPage(updatedPage);
+        //         getContactsData({ isConcatData: true, pageNumber: updatedPage });
+        //     }
+        // }
+        setCallShouldHappenOnScroll(true);
+        const updatedPage = page + 1;
+        setPage(updatedPage);
+        getContactsData({ isConcatData: true, pageNumber: updatedPage });
+    }
+
+    const onContactDetailsClick = (contact) => {
+        setSelectedContact(contact);
+        setIsContactDetailsPopup(true);
+    }
+
+    const closeContactDetailsPopup = () => {
+        setIsContactDetailsPopup(false);
     }
 
     return (
         <>
-            <Modal show={show} onHide={handleClose} size='xl'>
+            <Modal show={show} onHide={handleClose} size='xl' backdrop="static">
                 <Modal.Header>
                     <Modal.Title>All Contacts</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Row>
-                        <Col className="p-2">
-                            <Link to="/a" className="btn btn-primary">All Contacts</Link>
-                        </Col>
-                        <Col className="p-2">
-                            <Link to="/b" className="btn btn-success">US Contacts</Link>
-                        </Col>
-                        <Col className="p-2">
-                            <Link to="/" className="btn btn-secondary">Close</Link>
-                        </Col>
-                    </Row>
-                    <Row className="mb-2">
-                        <Col>
-                            <Form.Label htmlFor="filter-contacts" className='remove-padding-left'>Filter Contacts</Form.Label>
-                            <Form.Control
-                                type="text"
-                                id="filter-contacts"
-                                name="filter-contacts"
-                                value={value}
-                                onChange={(event) => setValue(event.target.value)}
-                            />
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col>
-                            <RSC id="RSC-Example" style={{ height: 250 }} onUpdate={onScrollStop}>
-                                <Table striped bordered hover>
-                                    <thead>
-                                        <tr>
-                                            <th>First Name</th>
-                                            <th>Last Name</th>
-                                            <th>Email</th>
-                                            <th>Phone Number</th>
-                                        </tr>
-                                    </thead>
+                    <CommonFilter filterContacts={value} setFilterContacts={setValue} />
 
-                                    <tbody>
-                                        {
-                                            contacts && contacts.length ? contacts.map((contact, index) => {
-                                                return (<tr>
-                                                    <td>{contact.first_name}</td>
-                                                    <td>{contact.last_name}</td>
-                                                    <td>{contact.email}</td>
-                                                    <td>{contact.phone_number}</td>
-                                                </tr>);
-                                            }) : null
-                                        }
-                                    </tbody>
-                                </Table>
-                            </RSC>
-                        </Col>
-                    </Row>
                 </Modal.Body>
                 <Modal.Footer className='justify-content-between'>
                     <div>
@@ -144,7 +123,10 @@ function ModalA() {
                     </div>
                     <Link to="/" className="btn btn-secondary">Close</Link>
                 </Modal.Footer>
-            </Modal >
+            </Modal>
+            {
+                isContactDetailsPopup && <ContactDetailsPopup closeContactDetailsPopup={closeContactDetailsPopup} selectedContact={selectedContact} />
+            }
         </>
     );
 }
