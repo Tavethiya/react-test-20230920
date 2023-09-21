@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Form from 'react-bootstrap/Form';
 import ContactDetailsPopup from './contact-details-popup';
 import RSC from "react-scrollbars-custom";
 import Table from 'react-bootstrap/Table';

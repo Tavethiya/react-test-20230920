@@ -5,6 +5,8 @@ import ModalA from "./component/modal-A";
 import ModalB from "./component/modal-B";
 import Home from "./component/home";
 import './App.css'
+import { connect } from "react-redux";
+import { retrieveContacts } from './actions/contacts';
 
 const App = () => {
     return (
@@ -19,4 +21,4 @@ const App = () => {
     )
 }
 
-export default App
+export default connect(null, { retrieveContacts })(App);

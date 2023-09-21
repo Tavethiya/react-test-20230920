@@ -11,10 +11,10 @@ function CommonFilter(props) {
             <Row className="mb-1">
                 <Col xs={3} className='d-flex'>
                     <Col>
-                        <Link to="/a" className="btn btn-primary">All Contacts</Link>
+                        <Link to="/a" className="btn btn-primary button-a">All Contacts</Link>
                     </Col>
                     <Col>
-                        <Link to="/b" className="btn btn-success">US Contacts</Link>
+                        <Link to="/b" className="btn btn-success button-b">US Contacts</Link>
                     </Col>
 
                 </Col>

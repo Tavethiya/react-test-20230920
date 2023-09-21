@@ -40,3 +40,13 @@
 .remove-padding-left {
   padding-left: 0 !important;
 }
+
+.button-a, .button-c {
+  background-color:  #46139f !important;
+  border-color: #46139f !important;
+}
+
+.button-b {
+  background-color:  #ff7f50 !important;
+  border-color: #ff7f50 !important;
+}
